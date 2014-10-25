@@ -82,3 +82,5 @@ local.properties
  
 # PDT-specific
 .buildpath
+output.txt
+output.txt

@@ -4,9 +4,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * klasa obiektu który chcemy zaklasyfikowac
+ * klasa obiektu ktory chcemy zaklasyfikowac
  * 
- * @author Kuba
+ * @author Taras Melon & Jakub Kolodziej
  * 
  */
 public class ToClassify {

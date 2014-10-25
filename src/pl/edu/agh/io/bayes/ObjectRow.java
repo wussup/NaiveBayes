@@ -6,10 +6,10 @@ import java.util.Map;
 /**
  * Klasa pojedynczego obiektu ktory jest reprezentacja wiersza pobranego z pliku
  * 
- * @author Kuba
+ * @author Taras Melon & Jakub Kolodziej
  * 
  */
-public class ObjectRaw {
+public class ObjectRow {
 	/**
 	 * nazwa klasy do jakiej obiekt nalezy
 	 */
@@ -20,7 +20,7 @@ public class ObjectRaw {
 	 */
 	private Map<String, String> parameters;
 
-	public ObjectRaw() {
+	public ObjectRow() {
 		parameters = new LinkedHashMap<String, String>();
 	}
 

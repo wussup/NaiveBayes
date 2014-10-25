@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
@@ -40,10 +41,7 @@ public class BayesClassificator {
 				if (i == classificator) {
 					raw.setClassName(prop);
 				} else {
-					String[] property = new String[2];
-					property[0] = String.valueOf(i);
-					property[1] = prop;
-					raw.getParameters().add(property);
+					raw.getParameters().put(String.valueOf(i), prop);
 				}
 				i++;
 			}
@@ -72,9 +70,10 @@ public class BayesClassificator {
 			if (raw.getClassName() != null
 					&& raw.getClassName().equals(className)) {
 				inClass++;
-				for (String[] param : raw.getParameters()) {
-					if (param[0].equals(parameter)
-							&& param[1].equals(parameterValue)) {
+				Map<String, String> map = raw.getParameters();
+				for (String param : map.keySet()) {
+					String value = map.get(param);
+					if (param.equals(parameter) && value.equals(parameterValue)) {
 						withParameterInClass++;
 					}
 				}
@@ -105,9 +104,11 @@ public class BayesClassificator {
 		}
 		for (String clazz : classNames) {
 			Double probability = 1.0;
-			for (String[] param : tc.getParamValue()) {
-				probability *= countProbabilityParameterInClass(clazz,
-						param[0], param[1]);
+			Map<String, String> map = tc.getParamValue();
+			for (String param : map.keySet()) {
+				String value = map.get(param);
+				probability *= countProbabilityParameterInClass(clazz, param,
+						value);
 			}
 			if (probability > percent) {
 				bestClass = clazz;

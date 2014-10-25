@@ -1,7 +1,7 @@
 package pl.edu.agh.io.bayes;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Klasa pojedynczego obiektu ktory jest reprezentacja wiersza pobranego z pliku
@@ -16,13 +16,12 @@ public class ObjectRaw {
 	private String className;
 
 	/**
-	 * lista parametrow obiektu, gdzie parametr to String [2] param : param[0] -
-	 * nazwa parametru param[1] - wartosc parametru
+	 * lista parametrow obiektu
 	 */
-	private List<String[]> parameters;
+	private Map<String, String> parameters;
 
 	public ObjectRaw() {
-		parameters = new ArrayList<String[]>();
+		parameters = new LinkedHashMap<String, String>();
 	}
 
 	public String getClassName() {
@@ -33,11 +32,12 @@ public class ObjectRaw {
 		this.className = className;
 	}
 
-	public List<String[]> getParameters() {
+	public Map<String, String> getParameters() {
 		return parameters;
 	}
 
-	public void setParameters(List<String[]> parameters) {
+	public void setParameters(Map<String, String> parameters) {
 		this.parameters = parameters;
 	}
+
 }

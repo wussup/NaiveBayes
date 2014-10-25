@@ -1,0 +1,4 @@
+NaiveBayes
+==========
+
+Naive Bayes Algorithm

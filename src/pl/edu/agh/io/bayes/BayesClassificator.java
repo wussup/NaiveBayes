@@ -37,7 +37,9 @@ public class BayesClassificator {
 		for (String s : rawData) {
 			ObjectRow raw = new ObjectRow();
 			int i = 1;
-			for (String prop : s.split(",")) {
+			String afterTrim = s.trim().replaceAll(" +", " ");
+			afterTrim = afterTrim.replaceAll("	", " ");
+			for (String prop : afterTrim.split(" ")) {
 				if (i == classColumn) {
 					raw.setClassName(prop);
 				} else {
@@ -47,6 +49,7 @@ public class BayesClassificator {
 			}
 			objects.add(raw);
 		}
+		System.out.println("Data readed");
 		return objects;
 	}
 
@@ -83,7 +86,7 @@ public class BayesClassificator {
 			}
 		}
 
-		return ((double) withParameterInClass / inClass) * 100;
+		return ((double) withParameterInClass / inClass) == 1.0 ? 1 :  ((double) withParameterInClass / inClass) * 100;
 	}
 
 	/**
@@ -157,7 +160,9 @@ public class BayesClassificator {
 		for (String s : rawData) {
 			ToClassify raw = new ToClassify();
 			int i = 1;
-			for (String prop : s.split(",")) {
+			String afterTrim = s.trim().replaceAll(" +", " ");
+			afterTrim = afterTrim.replaceAll("	", " ");
+			for (String prop : afterTrim.split(" ")) {
 				if (i == (numOfAttributes + 1)) {
 					// ignore
 				} else {
@@ -214,14 +219,16 @@ public class BayesClassificator {
 	}
 
 	public static void main(String[] args) throws IOException {
-		int numOfAttributes = 4;
-		String teachingData = "iris.data";
-		String classifyData = "iris_class.data";
+		int numOfAttributes = 561;
+		String teachingData = "human_train.txt";
+		String classifyData = "hs.txt";
+		long start = System.currentTimeMillis();
 		List<String> results = classify(
 				readClassifyDataFromFile(new File(classifyData),
 						numOfAttributes),
 				readTeachingDataFromFile(new File(teachingData),
 						numOfAttributes + 1));
+		System.out.println("Pomiar czasu: " + (System.currentTimeMillis()-start)/1000F + " sekund.");
 		writeOutputOnConsole(results);
 		writeOutput("output.txt", results);
 		System.err.println(compareResults(

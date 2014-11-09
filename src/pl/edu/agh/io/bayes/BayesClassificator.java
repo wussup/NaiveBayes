@@ -4,8 +4,14 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
+
+import weka.classifiers.bayes.NaiveBayes;
+import weka.core.Instance;
+import weka.core.Instances;
+import weka.core.converters.CSVLoader;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
@@ -34,12 +40,11 @@ public class BayesClassificator {
 			int classColumn) throws IOException {
 		List<ObjectRow> objects = new ArrayList<ObjectRow>();
 		List<String> rawData = Files.readLines(file, Charsets.UTF_8);
-		for (String s : rawData) {
+		for (int j = 1; j < rawData.size(); j++) {
+			String line = rawData.get(j);
 			ObjectRow raw = new ObjectRow();
 			int i = 1;
-			String afterTrim = s.trim().replaceAll(" +", " ");
-			afterTrim = afterTrim.replaceAll("	", " ");
-			for (String prop : afterTrim.split(" ")) {
+			for (String prop : line.split(" ")) {
 				if (i == classColumn) {
 					raw.setClassName(prop);
 				} else {
@@ -86,7 +91,8 @@ public class BayesClassificator {
 			}
 		}
 
-		return ((double) withParameterInClass / inClass) == 1.0 ? 1 :  ((double) withParameterInClass / inClass) * 100;
+		return ((double) withParameterInClass / inClass) == 1.0 ? 1
+				: ((double) withParameterInClass / inClass) * 100;
 	}
 
 	/**
@@ -157,12 +163,11 @@ public class BayesClassificator {
 			int numOfAttributes) throws IOException {
 		List<ToClassify> objects = new ArrayList<ToClassify>();
 		List<String> rawData = Files.readLines(file, Charsets.UTF_8);
-		for (String s : rawData) {
+		for (int j = 1; j < rawData.size(); j++) {
+			String line = rawData.get(j);
 			ToClassify raw = new ToClassify();
 			int i = 1;
-			String afterTrim = s.trim().replaceAll(" +", " ");
-			afterTrim = afterTrim.replaceAll("	", " ");
-			for (String prop : afterTrim.split(" ")) {
+			for (String prop : line.split(" ")) {
 				if (i == (numOfAttributes + 1)) {
 					// ignore
 				} else {
@@ -218,7 +223,7 @@ public class BayesClassificator {
 		return (double) (Math.round(100 * ((double) sum / (double) size) * 100)) / 100;
 	}
 
-	public static void main(String[] args) throws IOException {
+	private static void myBayes() throws IOException {
 		int numOfAttributes = 561;
 		String teachingData = "human_train.txt";
 		String classifyData = "hs.txt";
@@ -228,7 +233,8 @@ public class BayesClassificator {
 						numOfAttributes),
 				readTeachingDataFromFile(new File(teachingData),
 						numOfAttributes + 1));
-		System.out.println("Pomiar czasu: " + (System.currentTimeMillis()-start)/1000F + " sekund.");
+		System.out.println("Pomiar czasu: "
+				+ (System.currentTimeMillis() - start) / 1000F + " sekund.");
 		writeOutputOnConsole(results);
 		writeOutput("output.txt", results);
 		System.err.println(compareResults(
@@ -236,6 +242,63 @@ public class BayesClassificator {
 				readTeachingDataFromFile(new File(classifyData),
 						numOfAttributes + 1))
 				+ "% wynikow prawidlowo zakwalifikowano");
+	}
+
+	private static void wekaBayes() throws Exception {
+		String separator = " "/* "," */;
+		Instances instancesTrain = getInstances("human_train.txt", separator/* "iris.data" */);
+
+		// Make the last attribute be the class
+		instancesTrain.setClassIndex(instancesTrain.numAttributes() - 1);
+
+		NaiveBayes naiveBayes = new NaiveBayes();
+		naiveBayes.buildClassifier(instancesTrain);
+		Instances instancesClass = getInstances("human_test.txt", separator/* "iris_class.data" */);
+
+		// Make the last attribute be the class
+		instancesClass.setClassIndex(instancesClass.numAttributes() - 1);
+
+		Enumeration<Object> en = instancesTrain.classAttribute()
+				.enumerateValues();
+		List<String> list = new ArrayList<String>();
+		while (en.hasMoreElements()) {
+			list.add(en.nextElement().toString());
+		}
+		int size = instancesClass.size();
+		int sum = 0;
+		for (Instance inst : instancesClass) {
+			double[] result = naiveBayes.distributionForInstance(inst);
+			int index = -1;
+			double value = 0;
+			for (int i = 0; i < result.length; i++) {
+				double r = result[i];
+				if (r > value) {
+					value = r;
+					index = i;
+				}
+			}
+			if (list.get(index).equals(inst.stringValue(inst.classIndex()))) {
+				sum++;
+			}
+		}
+		System.out.println(((double) (Math
+				.round(100 * ((double) sum / (double) size) * 100)) / 100)
+				+ "%");
+	}
+
+	private static Instances getInstances(String filename, String separator)
+			throws IOException {
+		CSVLoader csvLoader = new CSVLoader();
+		csvLoader.setSource(new File(filename));
+		csvLoader.setFieldSeparator(separator);
+
+		Instances instances = csvLoader.getDataSet();
+		return instances;
+	}
+
+	public static void main(String[] args) throws Exception {
+		myBayes();
+		// wekaBayes();
 	}
 
 }

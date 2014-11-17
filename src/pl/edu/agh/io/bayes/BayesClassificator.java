@@ -76,7 +76,9 @@ public class BayesClassificator {
 			for (String paramName : raw.getParameters().keySet()) {
 				if (probabilityMap.get(raw.getClassName()).get(paramName) == null) {
 					HashMap<String, Double> paramMap = new HashMap<String, Double>();
-					paramMap.put(raw.getParameters().get(paramName), 1.0);
+					paramMap.put(
+							replaceString(raw.getParameters().get(paramName)),
+							1.0);
 					probabilityMap.get(raw.getClassName()).put(paramName,
 							paramMap);
 				} else {
@@ -103,6 +105,18 @@ public class BayesClassificator {
 		}
 		System.out.println("Data readed");
 		return objects;
+	}
+
+	private static String replaceString(String s) {
+		if (s == null)
+			return s;
+		try {
+			return String
+					.valueOf(((double) Math.round(new Double(s) * 10) / 10));
+		} catch (NumberFormatException e) {
+			// ignore
+		}
+		return s;
 	}
 
 	/**
@@ -143,7 +157,7 @@ public class BayesClassificator {
 			System.out.println("");
 
 		return probabilityMap.get(className).get(parameter).get(parameterValue)
-				/ classes.get(className) * 1000;
+				/ classes.get(className) * 1000000;
 
 		// return ((double) withParameterInClass / inClass) == 1.0 ? 1 :
 		// ((double) withParameterInClass / inClass) * 100;
@@ -315,25 +329,26 @@ public class BayesClassificator {
 	}
 
 	public static void main(String[] args) throws IOException {
-		int numOfAttributes = 35;
-		String teachingData = "train_ok.txt";
-		String classifyData = "test_ok.txt";
-		long start = System.currentTimeMillis();
-		List<String> results = classify(
-				readClassifyDataFromFile(new File(classifyData),
-						numOfAttributes, ","),
-				readTeachingDataFromFile(new File(teachingData),
-						numOfAttributes + 1, ","));
-		float time = (System.currentTimeMillis() - start) / 1000F;
-
-		writeOutputOnConsole(results);
-		writeOutput("output.txt", results);
-		System.err.println(compareResults(
-				results,
-				readTeachingDataFromFile(new File(classifyData),
-						numOfAttributes + 1, ","))
-				+ "% wynikow prawidlowo zakwalifikowano\n");
-		System.out.println("Pomiar czasu: " + time + " sekund.");
+		 int numOfAttributes = 561;
+		 String teachingData = "train.txt";
+		 String classifyData = "try.txt";
+		 long start = System.currentTimeMillis();
+		 List<String> results = classify(
+		 readClassifyDataFromFile(new File(classifyData),
+		 numOfAttributes, " +"),
+		 readTeachingDataFromFile(new File(teachingData),
+		 numOfAttributes + 1, " +"));
+		 float time = (System.currentTimeMillis() - start) / 1000F;
+		
+		 writeOutputOnConsole(results);
+		 writeOutput("output.txt", results);
+		 System.err.println(compareResults(
+		 results,
+		 readTeachingDataFromFile(new File(classifyData),
+		 numOfAttributes + 1, " +"))
+		 + "% wynikow prawidlowo zakwalifikowano\n");
+		 System.out.println("Pomiar czasu: " + time + " sekund.");
+		
 	}
 
 }

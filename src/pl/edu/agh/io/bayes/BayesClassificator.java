@@ -3,6 +3,7 @@ package pl.edu.agh.io.bayes;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,6 +23,13 @@ public class BayesClassificator {
 	public static Map<String, HashMap<String, HashMap<String, Double>>> probabilityMap = new HashMap<String, HashMap<String, HashMap<String, Double>>>();
 	public static Map<String, Long> classes = new HashMap<String, Long>();
 
+	public static List<ObjectRow> learnedData = new ArrayList<ObjectRow>();
+	public static List<ToClassify> testingData = new ArrayList<ToClassify>();
+	public static StringBuilder format = new StringBuilder ("#.");
+	public static DecimalFormat df;
+	
+	private static final String SEPARATOR = " +";
+
 	/**
 	 * Metoda wczytujaca dane z pliku
 	 * 
@@ -38,16 +46,13 @@ public class BayesClassificator {
 			int classColumn, String separator) throws IOException {
 		List<ObjectRow> objects = new ArrayList<ObjectRow>();
 		List<String> rawData = Files.readLines(file, Charsets.UTF_8);
-		int u = 1;
 		for (String s : rawData) {
-
-			System.out.println("TEACHING : " + u + " / " + rawData.size());
 			ObjectRow raw = new ObjectRow();
 			int i = 1;
 			if (s.startsWith("  ")) {
 				s = s.substring(2);
 			}
-			String afterTrim = s.trim().replaceAll(" +", " ");
+			String afterTrim = s.trim().replaceAll(SEPARATOR, " ");
 			afterTrim = afterTrim.replaceAll("\t", "");
 			afterTrim = afterTrim.replaceAll("\n", "");
 			afterTrim = afterTrim.replaceAll("	", "");
@@ -55,7 +60,7 @@ public class BayesClassificator {
 				if (i == classColumn) {
 					raw.setClassName(prop);
 				} else {
-					raw.getParameters().put(String.valueOf(i), prop);
+					raw.getParameters().put(String.valueOf(i), df.format(Double.valueOf(prop)));
 				}
 				i++;
 			}
@@ -65,7 +70,6 @@ public class BayesClassificator {
 				classes.put(raw.getClassName(), 1L);
 			} else {
 				Long previous = classes.get(raw.getClassName());
-				classes.remove(raw.getClassName());
 				classes.put(raw.getClassName(), previous + 1L);
 			}
 
@@ -90,8 +94,6 @@ public class BayesClassificator {
 						Double previous = ((Double) probabilityMap
 								.get(raw.getClassName()).get(paramName)
 								.get(raw.getParameters().get(paramName)));
-						probabilityMap.get(raw.getClassName()).get(paramName)
-								.remove(raw.getParameters().get(paramName));
 						probabilityMap
 								.get(raw.getClassName())
 								.get(paramName)
@@ -101,9 +103,7 @@ public class BayesClassificator {
 				}
 
 			}
-			u++;
 		}
-		System.out.println("Data readed");
 		return objects;
 	}
 
@@ -136,31 +136,12 @@ public class BayesClassificator {
 	 */
 	private static double countProbabilityParameterInClass(String className,
 			String parameter, String parameterValue, List<ObjectRow> objects) {
-		// int inClass = 0;
-		// int withParameterInClass = 0;
-		// for (ObjectRow raw : objects) {
-		// if (raw.getClassName() != null
-		// && raw.getClassName().equals(className)) {
-		// inClass++;
-		// Map<String, String> map = raw.getParameters();
-		// for (String param : map.keySet()) {
-		// String value = map.get(param);
-		// if (param.equals(parameter) && value.equals(parameterValue)) {
-		// withParameterInClass++;
-		// }
-		// }
-		// }
-		// }
 		if (probabilityMap.get(className).get(parameter).get(parameterValue) == null) {
 			return 0;
-		} else if (classes.get(className) == null)
-			System.out.println("");
-
+		} else {
 		return probabilityMap.get(className).get(parameter).get(parameterValue)
 				/ classes.get(className) * 1000000;
-
-		// return ((double) withParameterInClass / inClass) == 1.0 ? 1 :
-		// ((double) withParameterInClass / inClass) * 100;
+		}
 	}
 
 	/**
@@ -174,6 +155,7 @@ public class BayesClassificator {
 	 */
 	public static List<String> classify(List<ToClassify> tcs,
 			List<ObjectRow> objects) {
+		
 		List<String> classNames = new ArrayList<String>();
 
 		for (ObjectRow raw : objects) {
@@ -184,7 +166,6 @@ public class BayesClassificator {
 		}
 
 		List<String> bestClasses = new ArrayList<String>();
-		int i = 1;
 		for (ToClassify tc : tcs) {
 			String bestClass = null;
 			Double percent = 0.0;
@@ -201,9 +182,6 @@ public class BayesClassificator {
 					percent = probability;
 				}
 			}
-			System.out.println("Obiekt zaklasyfikowany: " + bestClass + "   ("
-					+ i + "/" + tcs.size() + ")");
-			i++;
 			bestClasses.add(bestClass);
 		}
 		return bestClasses;
@@ -238,13 +216,12 @@ public class BayesClassificator {
 		List<String> rawData = Files.readLines(file, Charsets.UTF_8);
 		int y = 1;
 		for (String s : rawData) {
-			System.out.println("CLASSIFY : " + y + " / " + rawData.size());
 			ToClassify raw = new ToClassify();
 			int i = 1;
 			if (s.startsWith("  ")) {
 				s = s.substring(2);
 			}
-			String afterTrim = s.trim().replaceAll(" +", " ");
+			String afterTrim = s.trim().replaceAll(SEPARATOR, " ");
 			afterTrim = afterTrim.replaceAll("\t", "");
 			afterTrim = afterTrim.replaceAll("\n", "");
 			afterTrim = afterTrim.replaceAll("	", "");
@@ -252,7 +229,7 @@ public class BayesClassificator {
 				if (i == (numOfAttributes + 1)) {
 					// ignore
 				} else {
-					raw.putNewParamValue(String.valueOf(i), prop);
+					raw.putNewParamValue(String.valueOf(i), df.format(Double.valueOf(prop)));
 				}
 				i++;
 			}
@@ -305,50 +282,34 @@ public class BayesClassificator {
 		return (double) (Math.round(100 * ((double) sum / (double) size) * 100)) / 100;
 	}
 
-	void makeFile() throws IOException {
-		List<String> lines = Files.readLines(new File("test_test.txt"),
-				Charsets.UTF_8);
-
-		FileWriter fw = new FileWriter(new File("test_ok.txt"));
-
-		for (String s : lines) {
-			int i = 0;
-			String classa = null;
-			for (String splitted : s.split(",")) {
-				if (i == 0) {
-					classa = splitted;
-				} else {
-					fw.write(splitted + ";");
-				}
-				i++;
-			}
-			fw.write(classa + "\n");
-		}
-
-		fw.close();
-	}
 
 	public static void main(String[] args) throws IOException {
-		 int numOfAttributes = 561;
-		 String teachingData = "train.txt";
-		 String classifyData = "try.txt";
-		 long start = System.currentTimeMillis();
-		 List<String> results = classify(
-		 readClassifyDataFromFile(new File(classifyData),
-		 numOfAttributes, " +"),
-		 readTeachingDataFromFile(new File(teachingData),
-		 numOfAttributes + 1, " +"));
-		 float time = (System.currentTimeMillis() - start) / 1000F;
+		int precision = 5;
+		for (int i=0; i<precision; i++){
+			format.append("#");
+		}
+		df = new DecimalFormat(format.toString());
+		int numOfAttributes = 561;
+		String teachingData = "human_train.txt";
+		String classifyData = "human_test.txt";
 		
-		 writeOutputOnConsole(results);
-		 writeOutput("output.txt", results);
-		 System.err.println(compareResults(
-		 results,
-		 readTeachingDataFromFile(new File(classifyData),
-		 numOfAttributes + 1, " +"))
-		 + "% wynikow prawidlowo zakwalifikowano\n");
-		 System.out.println("Pomiar czasu: " + time + " sekund.");
+		long start = System.currentTimeMillis();
+		learnedData = readTeachingDataFromFile(new File(teachingData),
+				numOfAttributes + 1, SEPARATOR);
+		System.out.println("Data learned in " + (System.currentTimeMillis()-start)/1000F + " seconds");
+		testingData = readClassifyDataFromFile(new File(classifyData),
+				numOfAttributes, SEPARATOR);
+		start = System.currentTimeMillis();
+		List<String> results = classify(testingData, learnedData);
+		float time = (System.currentTimeMillis() - start) / 1000F;
+		System.out.println("Data classified: " + time + " sekund.");
+		System.err.println(compareResults(
+				results,
+				readTeachingDataFromFile(new File(classifyData),
+						numOfAttributes + 1, SEPARATOR))
+				+ "% wynikow prawidlowo zakwalifikowano\n");
 		
+
 	}
 
 }

@@ -9,11 +9,10 @@ import java.util.List;
 import java.util.Map;
 
 import weka.classifiers.bayes.NaiveBayes;
+import weka.core.Attribute;
 import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.converters.CSVLoader;
-import weka.filters.Filter;
-import weka.filters.supervised.attribute.Discretize;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
@@ -247,12 +246,6 @@ public class BayesClassificator {
 	}
 
 	private static void wekaBayes() throws Exception {
-		Discretize filter = new Discretize();
-		
-		
-		Instances instancesTrainWithFilter;
-		Instances instancesClassWithFilter;
-		
 		String separator = " "/* "," */;
 		Instances instancesTrain = getInstances("human_train.txt", separator/* "iris.data" */);
 
@@ -270,18 +263,40 @@ public class BayesClassificator {
 		while (en.hasMoreElements()) {
 			list.add(en.nextElement().toString());
 		}
-		
-		filter.setInputFormat(instancesTrain);
-		filter.setBinRangePrecision(20);
-		instancesTrainWithFilter = Filter.useFilter(instancesTrain, filter);
-		instancesClassWithFilter = Filter.useFilter(instancesClass, filter);
-		
+
+		int precision = 1;
+
+		for (Instance i : instancesTrain) {
+			Enumeration<Attribute> attrs = i.enumerateAttributes();
+			while (attrs.hasMoreElements()) {
+				Attribute a = attrs.nextElement();
+				i.setValue(
+						a,
+						Double.valueOf(
+								String.format("%." + precision + "f",
+										i.value(a)).replace(",", "."))
+								.doubleValue());
+			}
+		}
+		for (Instance i : instancesClass) {
+			Enumeration<Attribute> attrs = i.enumerateAttributes();
+			while (attrs.hasMoreElements()) {
+				Attribute a = attrs.nextElement();
+				i.setValue(
+						a,
+						Double.valueOf(
+								String.format("%." + precision + "f",
+										i.value(a)).replace(",", "."))
+								.doubleValue());
+			}
+		}
+
 		NaiveBayes naiveBayes = new NaiveBayes();
-		naiveBayes.buildClassifier(instancesTrainWithFilter);
-		
-		int size = instancesClassWithFilter.size();
+		naiveBayes.buildClassifier(instancesTrain);
+
+		int size = instancesClass.size();
 		int sum = 0;
-		for (Instance inst : instancesClassWithFilter) {
+		for (Instance inst : instancesClass) {
 			double[] result = naiveBayes.distributionForInstance(inst);
 			int index = -1;
 			double value = 0;
@@ -312,8 +327,8 @@ public class BayesClassificator {
 	}
 
 	public static void main(String[] args) throws Exception {
-//		myBayes();
-		 wekaBayes();
+		// myBayes();
+		wekaBayes();
 	}
 
 }

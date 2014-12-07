@@ -12,6 +12,8 @@ import weka.classifiers.bayes.NaiveBayes;
 import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.converters.CSVLoader;
+import weka.filters.Filter;
+import weka.filters.supervised.attribute.Discretize;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
@@ -245,14 +247,18 @@ public class BayesClassificator {
 	}
 
 	private static void wekaBayes() throws Exception {
+		Discretize filter = new Discretize();
+		
+		
+		Instances instancesTrainWithFilter;
+		Instances instancesClassWithFilter;
+		
 		String separator = " "/* "," */;
 		Instances instancesTrain = getInstances("human_train.txt", separator/* "iris.data" */);
 
 		// Make the last attribute be the class
 		instancesTrain.setClassIndex(instancesTrain.numAttributes() - 1);
 
-		NaiveBayes naiveBayes = new NaiveBayes();
-		naiveBayes.buildClassifier(instancesTrain);
 		Instances instancesClass = getInstances("human_test.txt", separator/* "iris_class.data" */);
 
 		// Make the last attribute be the class
@@ -264,9 +270,18 @@ public class BayesClassificator {
 		while (en.hasMoreElements()) {
 			list.add(en.nextElement().toString());
 		}
-		int size = instancesClass.size();
+		
+		filter.setInputFormat(instancesTrain);
+		filter.setBinRangePrecision(20);
+		instancesTrainWithFilter = Filter.useFilter(instancesTrain, filter);
+		instancesClassWithFilter = Filter.useFilter(instancesClass, filter);
+		
+		NaiveBayes naiveBayes = new NaiveBayes();
+		naiveBayes.buildClassifier(instancesTrainWithFilter);
+		
+		int size = instancesClassWithFilter.size();
 		int sum = 0;
-		for (Instance inst : instancesClass) {
+		for (Instance inst : instancesClassWithFilter) {
 			double[] result = naiveBayes.distributionForInstance(inst);
 			int index = -1;
 			double value = 0;
@@ -297,8 +312,8 @@ public class BayesClassificator {
 	}
 
 	public static void main(String[] args) throws Exception {
-		myBayes();
-		// wekaBayes();
+//		myBayes();
+		 wekaBayes();
 	}
 
 }
